@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Reports History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        /* Navigation Styles */
+        .nav-menu {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-menu .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .currency-selector {
+            position: relative;
+            z-index: 1001;
+        }
+
+        .currency-selector select {
+            padding: 0.5rem 2rem 0.5rem 1rem;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 0.5rem) center;
+            padding-right: 2rem;
+        }
+
+        .currency-selector select:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .currency-selector select option {
+            background: white;
+            color: #333;
+        }
+
+        /* Main Content */
+        .content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Overview Card */
+        .overview-card {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .overview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Reports Table Card */
+        .reports-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1.2rem 1rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+            transform: scale(1.01);
+        }
+
+        /* Status Badges */
+        .currency-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* Action Buttons */
+        .download-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        /* Empty State */
+        .no-reports {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .no-reports i {
+            font-size: 4rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .no-reports h2 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-reports p {
+            color: #999;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-menu {
+                padding: 1rem;
+            }
+
+            .nav-content {
+                gap: 1rem;
+            }
+
+            .nav-menu .logo {
+                font-size: 1.2rem;
+            }
+
+            .nav-menu a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .currency-selector select {
+                padding: 0.4rem 1.8rem 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .overview-stats {
+                grid-template-columns: 1fr;
+            }
+
+            th, td {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-menu .logo span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="nav-menu">
+        <div class="logo">
+            <i class="fas fa-wallet"></i> <span>Expense Tracker</span>
+        </div>
+        <div class="nav-content">
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="{{ url_for('reports') }}" class="active">
+                    <i class="fas fa-chart-bar"></i> Reports
+                </a>
+            </div>
+            <div class="currency-selector">
+                <select id="currencySelect" onchange="window.location.href=`/set_currency/${this.value}`">
+                    {% for currency in available_currencies %}
+                    <option value="{{ currency }}" {% if current_currency == currency %}selected{% endif %}>
+                        {{ currency }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Overview Card -->
+        <div class="overview-card">
+            <h2><i class="fas fa-file-alt"></i> Reports Overview</h2>
+            <div class="overview-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ reports|length }}</div>
+                    <div class="stat-label">Total Reports Generated</div>
+                </div>
+                {% if reports %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ reports[0].currency }}</div>
+                    <div class="stat-label">Latest Currency Used</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">
+                        {{ reports[0].created_date.strftime('%d %b') }}
+                    </div>
+                    <div class="stat-label">Latest Report Date</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        {% if reports %}
+        <div class="reports-card">
+            <h2><i class="fas fa-history"></i> Report History</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date Generated</th>
+                            <th>Currency</th>
+                            <th>Total Salary</th>
+                            <th>Total Expenses</th>
+                            <th>Remaining Balance</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td>
+                                <i class="far fa-calendar-alt"></i>
+                                {{ report.created_date.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
+                            <td>
+                                <span class="currency-badge">{{ report.currency }}</span>
+                            </td>
+                            <td>
+                                <i class="fas fa-money-bill-wave"></i>
+                                {{ report.currency }} {{ "%.2f"|format(report.total_salary) }}
+                            </td>
+                            <td>
+                                <i class="fas fa-shopping-cart"></i>
+                                {{ report.currency }} {{ "%.2f"|format(report.total_expenses) }}
+                            </td>
+                            <td>
+                                <i class="fas fa-wallet"></i>
+                                {{ report.currency }} {{ "%.2f"|format(report.total_salary - report.total_expenses) }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('download_specific_report', report_id=report.id) }}" 
+                                   class="download-btn">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-reports">
+            <i class="far fa-folder-open"></i>
+            <h2>No Reports Available</h2>
+            <p>You haven't generated any expense reports yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

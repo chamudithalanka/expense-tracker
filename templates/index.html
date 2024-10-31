@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        /* Navigation Styles */
+        .nav-menu {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-menu .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .currency-selector {
+            position: relative;
+            z-index: 1001;
+        }
+
+        .currency-selector select {
+            padding: 0.5rem 2rem 0.5rem 1rem;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 0.5rem) center;
+            padding-right: 2rem;
+        }
+
+        .currency-selector select:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .currency-selector select option {
+            background: white;
+            color: #333;
+        }
+
+        /* Main Content */
+        .content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .balance-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .balance-item {
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        /* Form Styles */
+        .form-container {
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .download-btn {
+            background-color: #4CAF50;
+        }
+
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+
+        .delete-btn {
+            background-color: #ff4444;
+            padding: 8px;
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .delete-btn i {
+            font-size: 16px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-menu {
+                padding: 1rem;
+            }
+
+            .nav-content {
+                gap: 1rem;
+            }
+
+            .nav-menu .logo {
+                font-size: 1.2rem;
+            }
+
+            .nav-menu a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .currency-selector select {
+                padding: 0.4rem 1.8rem 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .balance-info {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-menu .logo span {
+                display: none;
+            }
+        }
+
+        /* Table and Button Styles */
+        .expenses-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .download-btn {
+            background-color: #4CAF50;
+        }
+
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+
+        .delete-btn {
+            background-color: #ff4444;
+            padding: 8px;
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .delete-btn i {
+            font-size: 16px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .expenses-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .expenses-header h2 {
+                font-size: 1.2rem;
+            }
+
+            .table-container {
+                margin-top: 10px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .action-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+
+            .action-btn i {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .expenses-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+
+            td .delete-btn {
+                padding: 6px 10px;
+                min-width: 70px;
+                margin: 0;
+                width: auto;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .delete-btn i {
+                margin-right: 4px;
+            }
+        }
+
+        /* Update Button Styles */
+        .delete-btn {
+            background-color: #ff4444;
+            padding: 8px;
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .delete-btn i {
+            font-size: 16px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .delete-btn {
+                padding: 6px;
+                width: 32px;
+                height: 32px;
+            }
+
+            .delete-btn i {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="nav-menu">
+        <div class="logo">
+            <i class="fas fa-wallet"></i> <span>Expense Tracker</span>
+        </div>
+        <div class="nav-content">
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}" class="active">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="{{ url_for('reports') }}">
+                    <i class="fas fa-chart-bar"></i> Reports
+                </a>
+            </div>
+            <div class="currency-selector">
+                <select id="currencySelect" onchange="window.location.href=`/set_currency/${this.value}`">
+                    {% for currency in available_currencies %}
+                    <option value="{{ currency }}" {% if current_currency == currency %}selected{% endif %}>
+                        {{ currency }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of your existing content -->
+    <div class="content">
+        <!-- Your existing cards and forms -->
+        {% if salary %}
+        <div class="card balance-card">
+            <h2><i class="fas fa-chart-pie"></i> Financial Overview</h2>
+            <div class="balance-info">
+                <div class="balance-item">
+                    <h3>Salary</h3>
+                    <p>{{ current_currency }} {{ "%.2f"|format(salary) }}</p>
+                </div>
+                <div class="balance-item">
+                    <h3>Total Expenses</h3>
+                    <p>{{ current_currency }} {{ "%.2f"|format(total_expenses) }}</p>
+                </div>
+                <div class="balance-item">
+                    <h3>Remaining Balance</h3>
+                    <p>{{ current_currency }} {{ "%.2f"|format(remaining_balance) }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2><i class="fas fa-money-bill-wave"></i> Add Monthly Salary</h2>
+            <form action="{{ url_for('add_salary') }}" method="post">
+                <div class="form-group">
+                    <input type="number" step="0.01" name="salary" placeholder="Enter your salary" required>
+                </div>
+                <button type="submit"><i class="fas fa-plus"></i> Add Salary</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-receipt"></i> Add Expense</h2>
+            <form action="{{ url_for('add_expense') }}" method="post">
+                <div class="form-group">
+                    <input type="text" name="item_name" placeholder="Item name" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" step="0.01" name="price" placeholder="Price" required>
+                </div>
+                <button type="submit"><i class="fas fa-plus"></i> Add Expense</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="expenses-header">
+                <h2><i class="fas fa-list"></i> Expenses List</h2>
+                <a href="{{ url_for('download_report') }}" class="action-btn download-btn">
+                    <i class="fas fa-download"></i> Download Report
+                </a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price ({{ current_currency }})</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.item_name }}</td>
+                            <td>{{ current_currency }} {{ "%.2f"|format(expense.price * conversion_rate) }}</td>
+                            <td>{{ expense.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <a href="{{ url_for('delete_expense', id=expense.id) }}" 
+                                   class="action-btn delete-btn">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
