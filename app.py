@@ -27,3 +27,14 @@ with app.app_context():
 def index():
     expenses = Expense.query.all()
     return render_template('index.html', expenses=expenses)
+
+@app.route('/add_expense', methods=['POST'])
+def add_expense():
+    description = request.form['description']
+    amount = float(request.form['amount'])
+    
+    expense = Expense(description=description, amount=amount)
+    db.session.add(expense)
+    db.session.commit()
+    
+    return redirect(url_for('index'))
