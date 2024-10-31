@@ -7,6 +7,7 @@ from datetime import timedelta
 import time
 import io
 import csv
+from sqlalchemy import desc
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-123'
@@ -150,37 +151,125 @@ def delete_expense(id):
 
 @app.route('/reports')
 def reports():
-    return render_template('reports.html')
+    try:
+        # Get all reports and order by newest first
+        reports = ReportHistory.query.order_by(ReportHistory.created_date.desc()).all()
+        
+        # Get current currency for the template
+        current_currency = session.get('currency', 'RON')
+        
+        # Get available currencies for the selector
+        available_currencies = ['RON', 'USD', 'EUR', 'GBP']
+        
+        print(f"Found {len(reports)} reports")  # Debug log
+        
+        return render_template(
+            'reports.html',
+            reports=reports,
+            current_currency=current_currency,
+            available_currencies=available_currencies
+        )
+    except Exception as e:
+        print(f"Error in reports route: {e}")  # Debug log
+        return "Error loading reports", 500
+
+@app.route('/download_specific_report/<int:report_id>')
+def download_specific_report(report_id):
+    try:
+        report = ReportHistory.query.get_or_404(report_id)
+        current_currency = report.currency
+        
+        # Get data for the report period
+        salary = Salary.query.order_by(Salary.date.desc()).first()
+        expenses = Expense.query.all()
+        
+        # Create CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        writer.writerow(['Expense Report'])
+        writer.writerow([f'Currency: {current_currency}'])
+        writer.writerow(['Report Generated: ' + report.created_date.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow([])
+        
+        writer.writerow(['Summary'])
+        writer.writerow(['Total Salary', f'{current_currency} {report.total_salary:.2f}'])
+        writer.writerow(['Total Expenses', f'{current_currency} {report.total_expenses:.2f}'])
+        writer.writerow(['Remaining Balance', f'{current_currency} {report.total_salary - report.total_expenses:.2f}'])
+
+        # Prepare the output
+        output.seek(0)
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=report.filename
+        )
+
+    except Exception as e:
+        print(f"Error downloading specific report: {e}")
+        return redirect(url_for('reports'))
+
+# Add this new model for storing report history
+class ReportHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    currency = db.Column(db.String(10), nullable=False)
+    total_expenses = db.Column(db.Float, nullable=False)
+    total_salary = db.Column(db.Float, nullable=False)
 
 @app.route('/download_report')
 def download_report():
     try:
-        # Get current currency
         current_currency = session.get('currency', 'RON')
         rates = get_exchange_rates()
         rate = rates.get(current_currency, 1.0)
 
-        # Get data
         salary = Salary.query.order_by(Salary.date.desc()).first()
         expenses = Expense.query.all()
         total_expenses = sum(expense.price for expense in expenses)
-        remaining = (salary.amount - total_expenses) if salary else 0
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f'expense_report_{timestamp}.csv'
+        
+        print(f"Creating report: {filename}")  # Debug log
+        
+        # Create and save report history FIRST
+        report_history = ReportHistory(
+            filename=filename,
+            currency=current_currency,
+            total_expenses=total_expenses * rate,
+            total_salary=salary.amount * rate if salary else 0
+        )
+        
+        try:
+            db.session.add(report_history)
+            db.session.commit()
+            print(f"Report saved to history successfully")  # Debug log
+        except Exception as e:
+            print(f"Error saving report to history: {e}")  # Debug log
+            db.session.rollback()
+            raise e
 
-        # Create CSV in memory
+        # Create CSV file
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # Write headers
+        # Write report header
         writer.writerow(['Expense Report'])
+        writer.writerow([f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'])
         writer.writerow([f'Currency: {current_currency}'])
         writer.writerow([])
         
-        # Write salary info
-        writer.writerow(['Salary Information'])
-        writer.writerow(['Amount', f'{current_currency} {salary.amount * rate:.2f}' if salary else '0'])
-        writer.writerow([])
+        # Write salary information
+        if salary:
+            writer.writerow(['Salary Information'])
+            writer.writerow(['Amount', f'{current_currency} {salary.amount * rate:.2f}'])
+            writer.writerow([])
         
-        # Write expense details
+        # Write expenses
         writer.writerow(['Expense Details'])
         writer.writerow(['Item', 'Price', 'Date'])
         for expense in expenses:
@@ -194,22 +283,25 @@ def download_report():
         writer.writerow([])
         writer.writerow(['Summary'])
         writer.writerow(['Total Expenses', f'{current_currency} {total_expenses * rate:.2f}'])
-        writer.writerow(['Remaining Balance', f'{current_currency} {remaining * rate:.2f}'])
+        if salary:
+            remaining = (salary.amount - total_expenses) * rate
+            writer.writerow(['Remaining Balance', f'{current_currency} {remaining:.2f}'])
 
         # Prepare the output
         output.seek(0)
+        
+        print(f"Sending file: {filename}")  # Debug log
+        
         return send_file(
             io.BytesIO(output.getvalue().encode('utf-8')),
             mimetype='text/csv',
             as_attachment=True,
-            download_name=f'expense_report_{datetime.now().strftime("%Y%m%d")}.csv'
+            download_name=filename
         )
 
     except Exception as e:
-        print(f"Error generating report: {e}")
+        print(f"Error in download_report: {e}")  # Debug log
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)
